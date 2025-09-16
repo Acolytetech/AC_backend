@@ -5,13 +5,15 @@ import {
   addProperty,
   getApprovedProperties,
   getMyProperties,
-  updatePropertyStatus, searchProperties
+  updatePropertyStatus, searchProperties,
+  getPropertyById
 } from "../controllers/propertyContoller.js";
 
 const router = express.Router();
 
 // Public
 router.get("/", getApprovedProperties);
+router.get("/:id" , getPropertyById);
 
 // Partner
 router.post("/", protect, upload.array("images", 5), addProperty);

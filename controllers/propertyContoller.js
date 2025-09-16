@@ -30,6 +30,25 @@ export const getApprovedProperties = async (req, res) => {
     res.status(500).json({ message: "Error fetching properties" });
   }
 };
+// Get Single Property by ID (Public)
+export const getPropertyById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const property = await Property.findById(id).populate(
+      "listedBy",
+      "name email"
+    );
+
+    if (!property) {
+      return res.status(404).json({ message: "Property not found" });
+    }
+
+    res.json(property);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching property", error });
+  }
+};
 
 // Get Partner's Properties
 export const getMyProperties = async (req, res) => {
