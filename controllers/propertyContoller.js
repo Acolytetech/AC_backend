@@ -21,7 +21,7 @@ export const addProperty = async (req, res) => {
 // Get Approved Properties (Public)
 export const getApprovedProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ status: "approved" }).populate(
+    const properties = await Property.find({ status: "Approved" || "approved" }).populate(
       "listedBy",
       "name email"
     );
