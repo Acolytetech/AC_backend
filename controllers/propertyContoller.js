@@ -53,7 +53,7 @@ export const getPropertyById = async (req, res) => {
 // Get Partner's Properties
 export const getMyProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ listedBy: req.user._id });
+    const properties = await Property.find({ listedBy: req.user.id });
     res.json(properties);
   } catch (error) {
     res.status(500).json({ message: "Error fetching your properties" });
