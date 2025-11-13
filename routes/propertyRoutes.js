@@ -1,6 +1,6 @@
 import express from "express";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
-import upload from "../middleware/uploadMiddleware.js";
+
 import {
   addProperty,
   getApprovedProperties,
@@ -8,6 +8,7 @@ import {
   updatePropertyStatus, searchProperties,
   getPropertyById
 } from "../controllers/propertyContoller.js";
+import {upload} from "../config/cloudinary.js";
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.get("/", getApprovedProperties);
 router.get("/:id" , getPropertyById);
 
 // Partner
-router.post("/", protect, upload.array("images", 5), addProperty);
+router.post("/",  upload.array("images", 5), addProperty);
 router.get("/my", protect, getMyProperties);
 
 // Admin
