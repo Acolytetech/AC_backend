@@ -148,11 +148,31 @@ export const addProperty = async (req, res) => {
 
 
 // ✅ Get Approved Properties (Public)
+// export const getApprovedProperties = async (req, res) => {
+//   try {
+//     const properties = await Property.find({
+//       status: { $in: ["Approved", "approved","pending","Pending"] },
+//     }).populate("listedBy", "name email");
+
+//     res.status(200).json({
+//       success: true,
+//       count: properties.length,
+//       properties,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Error fetching approved properties",
+//       error: error.message,
+//     });
+//   }
+// };
+
 export const getApprovedProperties = async (req, res) => {
   try {
-    const properties = await Property.find({
-      status: { $in: ["Approved", "approved","pending"] },
-    }).populate("listedBy", "name email");
+    // ✅ Fetch ALL properties — NO status filter
+    const properties = await Property.find({})
+      .populate("listedBy", "name email");
 
     res.status(200).json({
       success: true,
@@ -162,11 +182,12 @@ export const getApprovedProperties = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error fetching approved properties",
+      message: "Error fetching properties",
       error: error.message,
     });
   }
 };
+
 
 // ✅ Get Single Property by ID (Public)
 export const getPropertyById = async (req, res) => {
