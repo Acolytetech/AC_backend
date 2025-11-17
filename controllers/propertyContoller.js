@@ -7,8 +7,7 @@ import Property from "../models/Property.js";
 
 export const addProperty = async (req, res) => {
   try {
-    // Cloudinary images
-    const imageUrls = req.files ? req.files.map((file) => file.path) : [];
+    const imageUrls = req.files ? req.files.map((f) => f.path) : [];
 
     const propertyData = {
       title: req.body.title,
@@ -16,35 +15,29 @@ export const addProperty = async (req, res) => {
       developer: req.body.developer,
       overview: req.body.overview,
 
-      // ✅ FIX: Location nested object
+      propertyType: req.body.propertyType || "sale",
+
+      price: {
+        value: req.body.priceValue,
+        unit: req.body.priceUnit,
+      },
+
       location: {
         city: req.body.city,
         area: req.body.area,
         landmark: req.body.landmark,
       },
 
-      // Price nested object
-      price: {
-        value: req.body.priceValue,
-        unit: req.body.priceUnit,
-      },
+      highlights: req.body["highlights[]"] || [],
+      amenities: req.body["amenities[]"] || [],
+      investmentBenefits: req.body["investmentBenefits[]"] || [],
 
-      // Arrays
-      highlights: req.body["highlights[]"] || req.body.highlights || [],
-      amenities: req.body["amenities[]"] || req.body.amenities || [],
-      investmentBenefits:
-        req.body["investmentBenefits[]"] ||
-        req.body.investmentBenefits ||
-        [],
-
-      // Booking details
       bookingDetails: {
         offers: req.body.bookingOffers,
         paymentPlans: req.body.bookingPlans,
         loanAssistance: req.body.bookingLoan,
       },
 
-      // Contact nested object
       contact: {
         primary: {
           name: req.body.contactPrimaryName,
@@ -58,18 +51,14 @@ export const addProperty = async (req, res) => {
         },
       },
 
-      type: req.body.propertyType || "sale", // buy/sale/rent/lease
-
       images: imageUrls,
-
-      listedBy: req.user?._id || "67455c4b8a111c99e3b12345",
+      listedBy: req.user?._id,
     };
 
     const property = await Property.create(propertyData);
 
     res.status(201).json({ success: true, property });
   } catch (error) {
-    console.error("❌ Error adding property:", error);
     res.status(500).json({
       success: false,
       message: "Error adding property",
@@ -77,6 +66,7 @@ export const addProperty = async (req, res) => {
     });
   }
 };
+
 
 
 
