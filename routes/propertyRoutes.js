@@ -6,7 +6,8 @@ import {
   getApprovedProperties,
   getMyProperties,
   updatePropertyStatus, searchProperties,
-  getPropertyById
+  getPropertyById,
+  deleteAllProperties
 } from "../controllers/propertyContoller.js";
 import {upload} from "../config/cloudinary.js";
 
@@ -15,6 +16,8 @@ const router = express.Router();
 // Public
 router.get("/", getApprovedProperties);
 router.get("/:id" , getPropertyById);
+router.delete("/delete_all", deleteAllProperties);
+
 
 // Partner
 router.post("/",  upload.array("images", 5), addProperty);

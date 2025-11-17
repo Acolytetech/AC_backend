@@ -7,7 +7,7 @@ import Property from "../models/Property.js";
 
 export const addProperty = async (req, res) => {
   try {
-    // ✅ Cloudinary से upload हुए images के secure URLs लो
+    // Cloudinary images
     const imageUrls = req.files ? req.files.map((file) => file.path) : [];
 
     const propertyData = {
@@ -15,35 +15,54 @@ export const addProperty = async (req, res) => {
       tagline: req.body.tagline,
       developer: req.body.developer,
       overview: req.body.overview,
-      city: req.body.city,
-      area: req.body.area,
-      landmark: req.body.landmark,
+
+      // ✅ FIX: Location nested object
+      location: {
+        city: req.body.city,
+        area: req.body.area,
+        landmark: req.body.landmark,
+      },
+
+      // Price nested object
       price: {
         value: req.body.priceValue,
         unit: req.body.priceUnit,
       },
+
+      // Arrays
       highlights: req.body["highlights[]"] || req.body.highlights || [],
       amenities: req.body["amenities[]"] || req.body.amenities || [],
       investmentBenefits:
         req.body["investmentBenefits[]"] ||
         req.body.investmentBenefits ||
         [],
-      bookingOffers: req.body.bookingOffers,
-      bookingPlans: req.body.bookingPlans,
-      bookingLoan: req.body.bookingLoan,
-      contactPrimary: {
-        name: req.body.contactPrimaryName,
-        phone: req.body.contactPrimaryPhone,
-        email: req.body.contactPrimaryEmail,
+
+      // Booking details
+      bookingDetails: {
+        offers: req.body.bookingOffers,
+        paymentPlans: req.body.bookingPlans,
+        loanAssistance: req.body.bookingLoan,
       },
-      contactSecondary: {
-        name: req.body.contactSecondaryName,
-        phone: req.body.contactSecondaryPhone,
-        role: req.body.contactSecondaryRole,
+
+      // Contact nested object
+      contact: {
+        primary: {
+          name: req.body.contactPrimaryName,
+          phone: req.body.contactPrimaryPhone,
+          email: req.body.contactPrimaryEmail,
+        },
+        secondary: {
+          name: req.body.contactSecondaryName,
+          phone: req.body.contactSecondaryPhone,
+          role: req.body.contactSecondaryRole,
+        },
       },
-      propertyType: req.body.propertyType || "sale",
+
+      type: req.body.propertyType || "sale", // buy/sale/rent/lease
+
       images: imageUrls,
-      listedBy: req.user?._id || "67455c4b8a111c99e3b12345", // test fallback
+
+      listedBy: req.user?._id || "67455c4b8a111c99e3b12345",
     };
 
     const property = await Property.create(propertyData);
@@ -58,6 +77,7 @@ export const addProperty = async (req, res) => {
     });
   }
 };
+
 
 
 
@@ -293,6 +313,24 @@ export const searchProperties = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error searching properties",
+      error: error.message,
+    });
+  }
+};
+// DELETE ALL PROPERTIES
+export const deleteAllProperties = async (req, res) => {
+  try {
+    const result = await Property.deleteMany({});
+
+    res.status(200).json({
+      success: true,
+      message: "All properties deleted successfully",
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error deleting properties",
       error: error.message,
     });
   }
