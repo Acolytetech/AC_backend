@@ -62,19 +62,113 @@ export const addProperty = async (req, res) => {
 
 
 
-// Get Approved Properties (Public)
+// // Get Approved Properties (Public)
+// export const getApprovedProperties = async (req, res) => {
+//   try {
+//     const properties = await Property.find({ status: "Approved" || "approved" }).populate(
+//       "listedBy",
+//       "name email"
+//     );
+//     res.json(properties);
+//   } catch (error) {
+//     res.status(500).json({ message: "Error fetching properties" });
+//   }
+// };
+// // Get Single Property by ID (Public)
+// export const getPropertyById = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const property = await Property.findById(id).populate(
+//       "listedBy",
+//       "name email"
+//     );
+
+//     if (!property) {
+//       return res.status(404).json({ message: "Property not found" });
+//     }
+
+//     res.json(property);
+//   } catch (error) {
+//     res.status(500).json({ message: "Error fetching property", error });
+//   }
+// };
+
+// // Get Partner's Properties
+// export const getMyProperties = async (req, res) => {
+//   try {
+//     const properties = await Property.find({ listedBy: req.user.id });
+//     res.json(properties);
+//   } catch (error) {
+//     res.status(500).json({ message: "Error fetching your properties" });
+//   }
+// };
+
+// // Approve / Reject Property (Admin only)
+// export const updatePropertyStatus = async (req, res) => {
+//   try {
+//     const property = await Property.findById(req.params.id);
+//     if (!property) return res.status(404).json({ message: "Property not found" });
+
+//     property.status = req.body.status; // approved | rejected
+//     await property.save();
+
+//     res.json({ message: `Property ${property.status}` });
+//   } catch (error) {
+//     res.status(500).json({ message: "Error updating property status" });
+//   }
+// };
+
+// // Search & Filter Properties (Public)
+// export const searchProperties = async (req, res) => {
+//   try {
+//     const { location, minPrice, maxPrice, bhk, type } = req.query;
+
+//     // Build query object dynamically
+//     const query = { status: "approved" };
+
+//     if (location) query.location = { $regex: location, $options: "i" };
+//     if (type) query.type = type;
+//     if (bhk) query.bhk = Number(bhk);
+//     if (minPrice || maxPrice) query.price = {};
+//     if (minPrice) query.price.$gte = Number(minPrice);
+//     if (maxPrice) query.price.$lte = Number(maxPrice);
+
+//     const properties = await Property.find(query).populate(
+//       "listedBy",
+//       "name email"
+//     );
+
+//     res.json(properties);
+//   } catch (error) {
+//     res.status(500).json({ message: "Error searching properties", error });
+//   }
+// };
+
+
+
+// ✅ Get Approved Properties (Public)
 export const getApprovedProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ status: "Approved" || "approved" }).populate(
-      "listedBy",
-      "name email"
-    );
-    res.json(properties);
+    const properties = await Property.find({
+      status: { $in: ["Approved", "approved","pending"] },
+    }).populate("listedBy", "name email");
+
+    res.status(200).json({
+      success: true,
+      count: properties.length,
+      properties,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching properties" });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching approved properties",
+      error: error.message,
+    });
   }
 };
-// Get Single Property by ID (Public)
+
+// ✅ Get Single Property by ID (Public)
 export const getPropertyById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -85,62 +179,100 @@ export const getPropertyById = async (req, res) => {
     );
 
     if (!property) {
-      return res.status(404).json({ message: "Property not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Property not found",
+      });
     }
 
-    res.json(property);
+    res.status(200).json({
+      success: true,
+      property,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching property", error });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching property",
+      error: error.message,
+    });
   }
 };
 
-// Get Partner's Properties
+// ✅ Get Partner's Properties
 export const getMyProperties = async (req, res) => {
   try {
     const properties = await Property.find({ listedBy: req.user.id });
-    res.json(properties);
+
+    res.status(200).json({
+      success: true,
+      count: properties.length,
+      properties,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching your properties" });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching your properties",
+      error: error.message,
+    });
   }
 };
 
-// Approve / Reject Property (Admin only)
+// ✅ Approve / Reject Property (Admin)
 export const updatePropertyStatus = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id);
-    if (!property) return res.status(404).json({ message: "Property not found" });
+    if (!property)
+      return res.status(404).json({ message: "Property not found" });
 
-    property.status = req.body.status; // approved | rejected
+    property.status = req.body.status;
     await property.save();
 
-    res.json({ message: `Property ${property.status}` });
+    res.json({
+      success: true,
+      message: `Property ${property.status}`,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error updating property status" });
+    res.status(500).json({
+      success: false,
+      message: "Error updating property status",
+      error: error.message,
+    });
   }
 };
 
-// Search & Filter Properties (Public)
+// ✅ Search & Filter Properties (Public)
 export const searchProperties = async (req, res) => {
   try {
-    const { location, minPrice, maxPrice, bhk, type } = req.query;
+    const { city, area, minPrice, maxPrice, propertyType } = req.query;
 
-    // Build query object dynamically
-    const query = { status: "approved" };
+    const query = {
+      status: "approved",
+    };
 
-    if (location) query.location = { $regex: location, $options: "i" };
-    if (type) query.type = type;
-    if (bhk) query.bhk = Number(bhk);
-    if (minPrice || maxPrice) query.price = {};
-    if (minPrice) query.price.$gte = Number(minPrice);
-    if (maxPrice) query.price.$lte = Number(maxPrice);
+    if (city) query.city = { $regex: city, $options: "i" };
+    if (area) query.area = { $regex: area, $options: "i" };
+    if (propertyType) query.propertyType = propertyType;
+
+    // Price filtering
+    if (minPrice || maxPrice) query["price.value"] = {};
+    if (minPrice) query["price.value"].$gte = Number(minPrice);
+    if (maxPrice) query["price.value"].$lte = Number(maxPrice);
 
     const properties = await Property.find(query).populate(
       "listedBy",
       "name email"
     );
 
-    res.json(properties);
+    res.status(200).json({
+      success: true,
+      count: properties.length,
+      properties,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error searching properties", error });
+    res.status(500).json({
+      success: false,
+      message: "Error searching properties",
+      error: error.message,
+    });
   }
 };
