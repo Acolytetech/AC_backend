@@ -274,17 +274,38 @@ export const updatePropertyStatus = async (req, res) => {
 // ✅ Search & Filter Properties (Public)
 export const searchProperties = async (req, res) => {
   try {
-    const { city, area, minPrice, maxPrice, propertyType } = req.query;
+    const { location, bhk, type, minPrice, maxPrice } = req.query;
 
     const query = {
-      status: "approved",
+      // status: "approved", // 👉 REMOVE IF YOU WANT ALL PROPERTIES
     };
 
-    if (city) query.city = { $regex: city, $options: "i" };
-    if (area) query.area = { $regex: area, $options: "i" };
-    if (propertyType) query.propertyType = propertyType;
+    // 👉 Location matches city OR area
+    if (location) {
+      query.$or = [
+        { city: { $regex: location, $options: "i" } },
+        { area: { $regex: location, $options: "i" } }
+      ];
+    }
 
-    // Price filtering
+    // 👉 BHK (2BHK, 3BHK etc.)
+    if (bhk) {
+      query.$and = [
+        {
+          $or: [
+            { tagline: { $regex: bhk, $options: "i" } },
+            { title: { $regex: bhk, $options: "i" } }
+          ]
+        }
+      ];
+    }
+
+    // 👉 Type filter → rent/sale
+    if (type) {
+      query.propertyType = type;
+    }
+
+    // 👉 Price filtering
     if (minPrice || maxPrice) query["price.value"] = {};
     if (minPrice) query["price.value"].$gte = Number(minPrice);
     if (maxPrice) query["price.value"].$lte = Number(maxPrice);
@@ -299,6 +320,7 @@ export const searchProperties = async (req, res) => {
       count: properties.length,
       properties,
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -307,6 +329,7 @@ export const searchProperties = async (req, res) => {
     });
   }
 };
+
 // DELETE ALL PROPERTIES
 export const deleteAllProperties = async (req, res) => {
   try {
