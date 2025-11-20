@@ -7,9 +7,9 @@ export const createLead = async (req, res) => {
     const { propertyId, userName, userEmail, userPhone, message } = req.body;
 
     const property = await Property.findById(propertyId);
-    if (!property || property.status !== "approved") {
-      return res.status(400).json({ message: "Invalid or unapproved property" });
-    }
+    // if (!property || property.status !== "approved") {
+    //   return res.status(400).json({ message: "Invalid or unapproved property" });
+    // }
 
     const lead = await Lead.create({
       property: propertyId,
