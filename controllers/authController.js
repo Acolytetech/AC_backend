@@ -1,50 +1,179 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { serialize } from "cookie";
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+  return jwt.sign({ id  }, process.env.JWT_SECRET, { expiresIn: "30d" });
 };
 
-// @desc Register User
+// ---------------- REGISTER USER ----------------
 export const registerUser = async (req, res) => {
   const { name, email, password, role } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: "User already exists" });
+    if (userExists)
+      return res.status(400).json({ message: "User already exists" });
 
-    const user = await User.create({ name, email, password, role });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, password: hashedPassword, role });
+
+    const token = generateToken(user._id, user.role);
+
+    res.setHeader(
+  "Set-Cookie",
+  serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 30 * 24 * 60 * 60,
+    path: "/",
+  })
+);
+
+
     res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
-      token: generateToken(user._id),
+      token,
+      message: "User registered successfully",
     });
   } catch (error) {
     res.status(500).json({ message: "Error registering user" });
   }
 };
+// ---------------- GET LOGGED-IN USER ----------------
+export const getMe = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
 
-// @desc Login User
+  res.json({
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    role: req.user.role,
+  });
+};
+
+// ---------------- LOGIN USER ----------------
+
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ email });
+
     if (user && (await bcrypt.compare(password, user.password))) {
-      res.json({
+      const token = generateToken(user._id, user.role);
+
+      // MUST ENABLE THIS
+      res.setHeader(
+        "Set-Cookie",
+        serialize("token", token, {
+          httpOnly: true,
+          secure: false, // LOCALHOST ke liye false
+          sameSite: "lax",
+          maxAge: 30 * 24 * 60 * 60,
+          path: "/",
+        })
+      );
+
+      return res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
-        token: generateToken(user._id),
+        token,
+        message: "Login successful",
       });
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
     }
+
+    return res.status(401).json({ message: "Invalid email or password" });
   } catch (error) {
-    res.status(500).json({ message: "Error logging in" });
+    return res.status(500).json({ message: "Error logging in" });
+  }
+};
+
+
+// ---------------- LOGOUT USER ----------------
+export const logoutUser = async (req, res) => {
+  res.setHeader(
+    "Set-Cookie",
+    serialize("token", "", { httpOnly: true, path: "/", maxAge: -1 })
+  );
+  res.json({ message: "Logged out successfully" });
+};
+
+// ---------------- GET ALL USERS ----------------
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching users" });
+  }
+};
+
+// ---------------- GET SINGLE USER ----------------
+export const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user" });
+  }
+};
+
+// ---------------- UPDATE USER ----------------
+export const updateUser = async (req, res) => {
+  try {
+    const { name, email, role } = req.body;
+
+    // Validate fields (optional)
+    if (!name || email || !role) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        email,
+        role,
+      },
+      { new: true, runValidators: true } // validate email format etc.
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Error updating user" });
+  }
+};
+
+
+// ---------------- DELETE USER ----------------
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting user" });
   }
 };

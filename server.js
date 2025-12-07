@@ -5,12 +5,21 @@ import connectDB from "./config/db.js";
 import propertyRoutes from "./routes/propertyRoutes.js";
 import leadRoutes from "./routes/leadRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import cookieParser from "cookie-parser";
+
 
 dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors());
+app.use(cookieParser());
+
+app.use(
+  cors({
+    origin: "http://localhost:3000",   // 👈 specific origin (no *)
+    credentials: true,                 // 👈 allow cookies
+  })
+);
 app.use(express.json());
 app.use("/api/properties", propertyRoutes);
 app.use("/api/leads", leadRoutes);
