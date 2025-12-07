@@ -16,7 +16,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: "http://localhost:3000" || "https://ac-frontend-ctfa.vercel.app/",   // 👈 specific origin (no *)
+    origin: "https://ac-frontend-ctfa.vercel.app/",   // 👈 specific origin (no *)
     credentials: true,                 // 👈 allow cookies
   })
 );
