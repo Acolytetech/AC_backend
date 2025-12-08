@@ -55,6 +55,7 @@ export const getMe = async (req, res) => {
     _id: req.user._id,
     name: req.user.name,
     email: req.user.email,
+    token: req.token,
     role: req.user.role,
   });
 };
@@ -67,36 +68,39 @@ export const loginUser = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const token = generateToken(user._id, user.role);
+    if (!user)
+      return res.status(400).json({ message: "Invalid email or password" });
 
-      // MUST ENABLE THIS
-      res.setHeader(
-        "Set-Cookie",
-        serialize("token", token, {
-          httpOnly: true,
-          secure: false, // LOCALHOST ke liye false
-          sameSite: "lax",
-          maxAge: 30 * 24 * 60 * 60,
-          path: "/",
-        })
-      );
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid email or password" });
 
-      return res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token,
-        message: "Login successful",
-      });
-    }
+    const token = generateToken(user._id, user.role);
 
-    return res.status(401).json({ message: "Invalid email or password" });
+    res.setHeader(
+      "Set-Cookie",
+      serialize("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 30 * 24 * 60 * 60,
+        path: "/",
+      })
+    );
+
+    res.json({
+      message: "Login successful",
+token:token,
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
   } catch (error) {
-    return res.status(500).json({ message: "Error logging in" });
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 // ---------------- LOGOUT USER ----------------

@@ -16,6 +16,7 @@ app.use(cookieParser());
 
 const allowedOrigins = [
   "http://localhost:3000",
+  "http://localhost:5000",
   "https://ac-frontend-ctfa.vercel.app",
   "https://ac-backendnew.onrender.com/api"
 ];
