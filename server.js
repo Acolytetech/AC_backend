@@ -14,10 +14,22 @@ connectDB();
 const app = express();
 app.use(cookieParser());
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://ac-frontend-ctfa.vercel.app",
+  "https://ac-backendnew.onrender.com/api"
+];
+
 app.use(
   cors({
-    origin: "https://ac-frontend-ctfa.vercel.app/",   // 👈 specific origin (no *)
-    credentials: true,                 // 👈 allow cookies
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
   })
 );
 app.use(express.json());
@@ -36,3 +48,4 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT} 🚀`));
+
