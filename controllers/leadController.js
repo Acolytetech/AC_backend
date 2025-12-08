@@ -4,7 +4,7 @@ import Property from "../models/Property.js";
 // Create Lead (User enquiry)
 export const createLead = async (req, res) => {
   try {
-    const { propertyId, userName, userEmail, userPhone, message } = req.body;
+    const { propertyId, userName, userEmail, userPhone, message,source } = req.body;
 
     const property = await Property.findById(propertyId);
     // if (!property || property.status !== "approved") {
@@ -17,6 +17,7 @@ export const createLead = async (req, res) => {
       userEmail,
       userPhone,
       message,
+      source,
     });
 
     res.status(201).json(lead);

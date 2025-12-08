@@ -5,12 +5,13 @@ const leadSchema = new mongoose.Schema(
     property: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Property",
-      required: true,
+      // required: true,
     },
     userName: { type: String, required: true },
     userEmail: { type: String, required: true },
     userPhone: { type: String },
     message: { type: String },
+    source: { type: String },
 
     status: {
       type: String,
