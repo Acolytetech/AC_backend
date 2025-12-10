@@ -81,8 +81,8 @@ export const loginUser = async (req, res) => {
       "Set-Cookie",
       serialize("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProd ? true : false,   // LOCALHOST par secure = false
+    sameSite: isProd ? "none" : "lax", 
         maxAge: 30 * 24 * 60 * 60,
         path: "/",
       })
