@@ -7,7 +7,8 @@ import {
   updateUser,
   deleteUser,
   logoutUser,
-  getMe
+  getMe,
+  googleLogin
 } from "../controllers/authController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -21,7 +22,7 @@ router.post("/logout", logoutUser);
 
 // ⭐ ADD THIS ⭐
 router.get("/getme", protect, getMe);
-
+router.post("/google" , googleLogin)
 // Admin
 router.get("/", getAllUsers);
 router.get("/:id", getUserById);

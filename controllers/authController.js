@@ -2,7 +2,7 @@ import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { serialize } from "cookie";
-
+import { OAuth2Client } from "google-auth-library";
 const generateToken = (id) => {
   return jwt.sign({ id  }, process.env.JWT_SECRET, { expiresIn: "30d" });
 };
@@ -45,6 +45,75 @@ export const registerUser = async (req, res) => {
     res.status(500).json({ message: "Error registering user" });
   }
 };
+
+
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// const generateToken = (id) => {
+//   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+// };
+
+export const googleLogin = async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({ message: "No Google credential provided" });
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub, email, name, picture } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        googleId: sub,
+        avatar: picture,
+        authType: "google",
+        password: null,
+      });
+    }
+
+    const token = generateToken(user._id);
+    const isProd = process.env.NODE_ENV === "production";
+
+    res.setHeader(
+      "Set-Cookie",
+      serialize("token", token, {
+        httpOnly: true,
+        secure: isProd ? true : false,
+        sameSite: isProd ? "none" : "lax",
+        maxAge: 30 * 24 * 60 * 60,
+        path: "/",
+      })
+    );
+
+    res.json({
+      message: "Google Login Successful",
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.log("Google Login Error", error);
+    res.status(500).json({ message: "Google Login Failed" });
+  }
+};
+
 // ---------------- GET LOGGED-IN USER ----------------
 export const getMe = async (req, res) => {
   if (!req.user) {
