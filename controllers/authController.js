@@ -76,13 +76,14 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
 
     const token = generateToken(user._id, user.role);
+const isProd = process.env.NODE_ENV === "production";
 
     res.setHeader(
       "Set-Cookie",
       serialize("token", token, {
         httpOnly: true,
         secure: isProd ? true : false,   // LOCALHOST par secure = false
-    sameSite: isProd ? "none" : "lax", 
+    sameSite: isProd ? "none" : "lax",
         maxAge: 30 * 24 * 60 * 60,
         path: "/",
       })
